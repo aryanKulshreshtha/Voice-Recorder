@@ -334,6 +334,21 @@
                     tools:text="@string/system_default" />
             </RelativeLayout>
 
+            <RelativeLayout
+                android:id="@+id/settings_noise_cancellation_holder"
+                style="@style/SettingsHolderSwitchStyle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <org.fossify.commons.views.MyMaterialSwitch
+                    android:id="@+id/settings_noise_cancellation"
+                    style="@style/SettingsSwitchStyle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/noise_cancellation" />
+
+            </RelativeLayout>
+
             <include
                 android:id="@+id/settings_audio_divider"
                 layout="@layout/divider" />

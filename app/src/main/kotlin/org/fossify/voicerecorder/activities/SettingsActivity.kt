@@ -73,6 +73,7 @@ class SettingsActivity : SimpleActivity() {
         setupBitrate()
         setupSamplingRate()
         setupMicrophoneMode()
+        setupNoiseCancellation()
         setupRecordAfterLaunch()
         setupKeepScreenOn()
         setupUseRecycleBin()
@@ -369,6 +370,14 @@ class SettingsActivity : SimpleActivity() {
         ) {
             config.microphoneMode = it as Int
             binding.settingsMicrophoneMode.text = config.getMicrophoneModeText(config.microphoneMode)
+        }
+    }
+
+    private fun setupNoiseCancellation() {
+        binding.settingsNoiseCancellation.isChecked = config.noiseCancellation
+        binding.settingsNoiseCancellationHolder.setOnClickListener {
+            binding.settingsNoiseCancellation.toggle()
+            config.noiseCancellation = binding.settingsNoiseCancellation.isChecked
         }
     }
 

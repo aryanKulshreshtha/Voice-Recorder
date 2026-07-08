@@ -1,6 +1,7 @@
 package org.fossify.voicerecorder.helpers
 
 import android.content.Context
+import android.opengl.GLSurfaceView
 import androidx.activity.ComponentActivity
 
 /**
@@ -11,7 +12,7 @@ import androidx.activity.ComponentActivity
 object AvatarSessionHolder {
     fun initialize(context: Context) = Unit
 
-    fun startSession(activity: ComponentActivity) = Unit
+    fun startSession(activity: ComponentActivity, renderTarget: GLSurfaceView, recordingBaseName: String) = Unit
 
     fun feedAudioSegment(pcm: ShortArray, sampleRate: Int) = Unit
 

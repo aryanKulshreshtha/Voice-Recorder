@@ -4,7 +4,10 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioFormat
 import android.media.AudioRecord
+import android.media.audiofx.NoiseSuppressor
 import android.os.ParcelFileDescriptor
+import android.os.Process
+import android.util.Log
 import com.naman14.androidlame.AndroidLame
 import com.naman14.androidlame.LameBuilder
 import org.fossify.commons.extensions.showErrorToast
@@ -28,6 +31,7 @@ class Mp3Recorder(val context: Context) : Recorder {
     private var androidLame: AndroidLame? = null
     private var fileDescriptor: ParcelFileDescriptor? = null
     private var outputStream: FileOutputStream? = null
+    private var noiseSuppressor: NoiseSuppressor? = null
     private val minBufferSize = AudioRecord.getMinBufferSize(
         context.config.samplingRate,
         AudioFormat.CHANNEL_IN_MONO,
@@ -72,11 +76,29 @@ class Mp3Recorder(val context: Context) : Recorder {
             .build()
 
         ensureBackgroundThread {
+            // Feeding the avatar engine below shares this thread with draining AudioRecord's
+            // hardware buffer. That buffer is small (tuned for low latency, not tolerance) — at
+            // default thread priority, the avatar engine's own CPU-heavy native rendering can
+            // starve this loop of scheduling time between reads for long enough that the
+            // hardware ring buffer overflows and read() starts returning repeated blocks (heard
+            // as looping/stuck audio, both live and in the saved file). Urgent-audio priority is
+            // the standard fix for exactly this class of capture starvation.
+            Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO)
             try {
                 audioRecord.startRecording()
             } catch (e: Exception) {
                 context.showErrorToast(e)
                 return@ensureBackgroundThread
+            }
+
+            if (context.config.noiseCancellation && NoiseSuppressor.isAvailable()) {
+                try {
+                    noiseSuppressor = NoiseSuppressor.create(audioRecord.audioSessionId)?.apply {
+                        enabled = true
+                    }
+                } catch (e: Exception) {
+                    Log.w("Mp3Recorder", "failed to create NoiseSuppressor, continuing without it", e)
+                }
             }
 
             while (!isStopped.get()) {
@@ -116,6 +138,8 @@ class Mp3Recorder(val context: Context) : Recorder {
     override fun release() {
         androidLame?.flush(mp3buffer)
         outputStream?.close()
+        noiseSuppressor?.release()
+        noiseSuppressor = null
         audioRecord.release()
     }
 

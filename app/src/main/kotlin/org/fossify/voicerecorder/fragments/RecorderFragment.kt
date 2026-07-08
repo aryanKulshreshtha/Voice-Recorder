@@ -26,6 +26,7 @@ import org.fossify.voicerecorder.R
 import org.fossify.voicerecorder.databinding.FragmentRecorderBinding
 import org.fossify.voicerecorder.extensions.config
 import org.fossify.voicerecorder.extensions.ensureStoragePermission
+import org.fossify.voicerecorder.extensions.getFormattedFilename
 import org.fossify.voicerecorder.extensions.setKeepScreenAwake
 import org.fossify.voicerecorder.helpers.AvatarSessionHolder
 import org.fossify.voicerecorder.helpers.CANCEL_RECORDING
@@ -62,6 +63,8 @@ class RecorderFragment(
         setupColors()
         if (!RecorderService.isRunning) {
             status = RECORDING_STOPPED
+            AvatarSessionHolder.cancelSession()
+            showAvatarSurface(false)
         }
 
         refreshView()
@@ -166,12 +169,25 @@ class RecorderFragment(
 
     private fun startRecording() {
         if (context.config.extension == EXTENSION_MP3) {
-            (context.getActivity() as? ComponentActivity)?.let { AvatarSessionHolder.startSession(it) }
+            (context.getActivity() as? ComponentActivity)?.let {
+                showAvatarSurface(true)
+                // Computed here (rather than read back from RecorderService) so the avatar's
+                // saved video can share the exact same base name as the MP3 it's a companion
+                // to — RecorderService computes its own recording path independently a moment
+                // later via the same getFormattedFilename(), which only varies by real time.
+                AvatarSessionHolder.startSession(it, binding.avatarSurfaceView, context.getFormattedFilename())
+            }
         }
 
         Intent(context, RecorderService::class.java).apply {
             context.startService(this)
         }
+    }
+
+    /** Swaps the waveform visualizer for the avatar render target, and back again. */
+    private fun showAvatarSurface(show: Boolean) {
+        binding.avatarSurfaceView.beVisibleIf(show)
+        binding.recorderVisualizer.beVisibleIf(!show)
     }
 
     private fun showCancelRecordingDialog() {
@@ -188,6 +204,7 @@ class RecorderFragment(
     private fun cancelRecording() {
         status = RECORDING_STOPPED
         AvatarSessionHolder.cancelSession()
+        showAvatarSurface(false)
         Intent(context, RecorderService::class.java).apply {
             action = CANCEL_RECORDING
             context.startService(this)
@@ -198,6 +215,7 @@ class RecorderFragment(
     private fun saveRecording() {
         status = RECORDING_STOPPED
         AvatarSessionHolder.completeSession()
+        showAvatarSurface(false)
         Intent(context, RecorderService::class.java).apply {
             context.stopService(this)
         }
@@ -261,6 +279,7 @@ class RecorderFragment(
         // avatar session. Idempotent no-op if it's already been cleared.
         if (status == RECORDING_STOPPED) {
             AvatarSessionHolder.cancelSession()
+            showAvatarSurface(false)
         }
     }
 

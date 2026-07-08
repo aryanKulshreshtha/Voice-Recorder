@@ -91,6 +91,10 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(KEEP_SCREEN_ON, true)
         set(keepScreenOn) = prefs.edit().putBoolean(KEEP_SCREEN_ON, keepScreenOn).apply()
 
+    var noiseCancellation: Boolean
+        get() = prefs.getBoolean(NOISE_CANCELLATION, false)
+        set(noiseCancellation) = prefs.edit().putBoolean(NOISE_CANCELLATION, noiseCancellation).apply()
+
     var wasMicModeWarningShown: Boolean
         get() = prefs.getBoolean(WAS_MIC_MODE_WARNING_SHOWN, false)
         set(wasMicModeWarningShown) = prefs.edit {

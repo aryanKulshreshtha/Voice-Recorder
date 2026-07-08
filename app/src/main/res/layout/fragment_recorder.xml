@@ -22,6 +22,21 @@
         app:layout_constraintBottom_toTopOf="@+id/recording_duration"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!--
+      Render target passed to AvatarSessionHolder/AvatarSDK for MP3 recordings (see
+      RecorderFragment). Occupies the same region as recorder_visualizer and is only made
+      visible while an avatar session is actually active; the two are never shown together.
+      A no-op, inert view on the foss flavor, which never starts a session against it.
+    -->
+    <android.opengl.GLSurfaceView
+        android:id="@+id/avatar_surface_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_margin="@dimen/big_margin"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/recording_duration"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <org.fossify.commons.views.MyTextView
         android:id="@+id/recording_duration"
         android:layout_width="wrap_content"
