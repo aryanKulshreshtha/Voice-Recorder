@@ -11,3 +11,9 @@ keystore.properties
 fastlane/fastlane.json
 fastlane/report.xml
 .kotlin/
+
+# Claude Code local session/config data
+.claude/
+
+# Locally-built AvatarSDK AAR (see AVATAR_SDK.md) — too large for git, not a published artifact
+app/libs/*.aar

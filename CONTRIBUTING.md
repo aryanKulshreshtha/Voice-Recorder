@@ -12,3 +12,8 @@ the [General Discussion](https://github.com/FossifyOrg/General-Discussion#contri
 
 In case you just want to for example improve a translation, you can find the way of doing
 it [here](https://github.com/FossifyOrg/General-Discussion#how-can-i-suggest-an-edit-to-a-file).
+
+### Building the avatar overlay feature (`core`/`gplay` flavors)
+
+See [AVATAR_SDK.md](AVATAR_SDK.md) for building/running the optional AvatarSDK-powered avatar
+overlay, including how to produce the AvatarSDK AAR this repo depends on.

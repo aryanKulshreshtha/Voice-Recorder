@@ -10,6 +10,7 @@ import com.naman14.androidlame.LameBuilder
 import org.fossify.commons.extensions.showErrorToast
 import org.fossify.commons.helpers.ensureBackgroundThread
 import org.fossify.voicerecorder.extensions.config
+import org.fossify.voicerecorder.helpers.AvatarSessionHolder
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
@@ -82,6 +83,7 @@ class Mp3Recorder(val context: Context) : Recorder {
                 if (!isPaused.get()) {
                     val count = audioRecord.read(rawData, 0, minBufferSize)
                     if (count > 0) {
+                        AvatarSessionHolder.feedAudioSegment(rawData.copyOf(count), context.config.samplingRate)
                         val encoded = androidLame!!.encode(rawData, rawData, count, mp3buffer)
                         if (encoded > 0) {
                             try {

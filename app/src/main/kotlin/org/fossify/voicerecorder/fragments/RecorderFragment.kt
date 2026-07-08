@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
+import androidx.activity.ComponentActivity
 import org.fossify.commons.activities.BaseSimpleActivity
 import org.fossify.commons.compose.extensions.getActivity
 import org.fossify.commons.dialogs.ConfirmationDialog
@@ -26,7 +27,9 @@ import org.fossify.voicerecorder.databinding.FragmentRecorderBinding
 import org.fossify.voicerecorder.extensions.config
 import org.fossify.voicerecorder.extensions.ensureStoragePermission
 import org.fossify.voicerecorder.extensions.setKeepScreenAwake
+import org.fossify.voicerecorder.helpers.AvatarSessionHolder
 import org.fossify.voicerecorder.helpers.CANCEL_RECORDING
+import org.fossify.voicerecorder.helpers.EXTENSION_MP3
 import org.fossify.voicerecorder.helpers.GET_RECORDER_INFO
 import org.fossify.voicerecorder.helpers.RECORDING_PAUSED
 import org.fossify.voicerecorder.helpers.RECORDING_RUNNING
@@ -162,6 +165,10 @@ class RecorderFragment(
     }
 
     private fun startRecording() {
+        if (context.config.extension == EXTENSION_MP3) {
+            (context.getActivity() as? ComponentActivity)?.let { AvatarSessionHolder.startSession(it) }
+        }
+
         Intent(context, RecorderService::class.java).apply {
             context.startService(this)
         }
@@ -180,6 +187,7 @@ class RecorderFragment(
 
     private fun cancelRecording() {
         status = RECORDING_STOPPED
+        AvatarSessionHolder.cancelSession()
         Intent(context, RecorderService::class.java).apply {
             action = CANCEL_RECORDING
             context.startService(this)
@@ -189,6 +197,7 @@ class RecorderFragment(
 
     private fun saveRecording() {
         status = RECORDING_STOPPED
+        AvatarSessionHolder.completeSession()
         Intent(context, RecorderService::class.java).apply {
             context.stopService(this)
         }
@@ -246,6 +255,13 @@ class RecorderFragment(
     fun gotStatusEvent(event: Events.RecordingStatus) {
         status = event.status
         refreshView()
+
+        // Safety net: if the service ever stops recording without going through
+        // saveRecording()/cancelRecording() (e.g. an internal error), still tear down the
+        // avatar session. Idempotent no-op if it's already been cleared.
+        if (status == RECORDING_STOPPED) {
+            AvatarSessionHolder.cancelSession()
+        }
     }
 
     @Suppress("unused")

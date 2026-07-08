@@ -83,13 +83,38 @@ android {
 
     flavorDimensions.add("variants")
     productFlavors {
-        register("core")
+        // AvatarSDK's own manifest requires minSdk 31; foss doesn't ship the SDK so it keeps the
+        // project-wide default minSdk.
+        register("core") { minSdk = 31 }
         register("foss")
-        register("gplay")
+        register("gplay") { minSdk = 31 }
     }
 
     sourceSets {
         getByName("main").java.directories.add("src/main/kotlin")
+        // Real AvatarSDK-backed implementation.
+        getByName("core").java.directories.add("src/core/kotlin")
+        getByName("gplay").java.directories.add("src/gplay/kotlin")
+        // No-op stand-in so the foss flavor never depends on AvatarSDK.
+        getByName("foss").java.directories.add("src/foss/kotlin")
+    }
+
+    androidResources {
+        @Suppress("UnstableApiUsage")
+        generateLocaleConfig = true
+        // AvatarSDK extracts libDI_plugin.so from assets at runtime; it must not be compressed
+        // into the APK for that to work.
+        noCompress += "so"
+    }
+
+    // AvatarSDK's QNN backend/model/skel libraries are dlopen'd by explicit filesystem path, not
+    // loaded via System.loadLibrary — that only works if they're physically extracted onto disk.
+    // AGP's modern default (useLegacyPackaging = false) instead mmaps native libs directly from
+    // inside the APK and leaves nativeLibraryDir empty, which breaks those dlopen() calls.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 
     compileOptions {
@@ -100,11 +125,6 @@ android {
 
     dependenciesInfo {
         includeInApk = false
-    }
-
-    androidResources {
-        @Suppress("UnstableApiUsage")
-        generateLocaleConfig = true
     }
 
     tasks.withType<KotlinCompile> {
@@ -147,4 +167,11 @@ dependencies {
     implementation(libs.tandroidlame)
     implementation(libs.autofittextview)
     detektPlugins(libs.compose.detekt)
+
+    // AvatarSDK is a locally-generated AAR, not a published artifact — see the AvatarSDK repo's
+    // own README/build for how to (re)produce sdk/build/outputs/aar/sdk-release.aar and drop it
+    // in here as avatarsdk-release.aar. Only the core/gplay flavors ship it; foss stays free of
+    // the SDK and the network permissions it brings in.
+    "coreImplementation"(files("libs/avatarsdk-release.aar"))
+    "gplayImplementation"(files("libs/avatarsdk-release.aar"))
 }
